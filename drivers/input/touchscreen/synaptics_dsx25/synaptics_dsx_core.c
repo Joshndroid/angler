@@ -835,7 +835,7 @@ static int synaptics_rmi4_f11_abs_report(struct synaptics_rmi4_data *rmi4_data,
 	extra_data = (struct synaptics_rmi4_f11_extra_data *)fhandler->extra;
 
 #ifdef CONFIG_WAKE_GESTURES
-	if (rmi4_data->suspend && rmi4_data->enable_wakeup_gesture && !s2w_switch) {
+	if (rmi4_data->suspend && rmi4_data->enable_wakeup_gesture && !s2w_switch && !camera_switch) {
 #else
 	if (rmi4_data->suspend && rmi4_data->enable_wakeup_gesture) {
 #endif
@@ -1424,7 +1424,7 @@ static irqreturn_t synaptics_rmi4_irq(int irq, void *data)
 		goto exit;
 
 #ifdef CONFIG_WAKE_GESTURES
-	if (rmi4_data->suspend && s2w_switch) {
+	if (rmi4_data->suspend && (s2w_switch || camera_switch)) {
 		wake_lock_timeout(&syn_wakelock, HZ/4);
 	}
 #endif
@@ -4161,7 +4161,7 @@ static int synaptics_rmi4_suspend(struct device *dev)
 		return 0;
 
 #ifdef CONFIG_WAKE_GESTURES
-	if (s2w_switch) {
+	if (s2w_switch || camera_switch) {
 		synaptics_rmi4_s2w_mode(rmi4_data, true);
 		goto exit;
 	}
@@ -4202,7 +4202,7 @@ static int synaptics_rmi4_resume(struct device *dev)
 		return 0;
 
 #ifdef CONFIG_WAKE_GESTURES
-	if (s2w_switch) {
+	if (s2w_switch || camera_switch) {
 		synaptics_rmi4_s2w_mode(rmi4_data, false);
 		goto exit;
 	}
@@ -4231,9 +4231,10 @@ exit:
 
 	if (wakeup_gesture_changed) {
 #ifdef CONFIG_WAKE_GESTURES
-		if (s2w_switch_temp == 0)
+		if (s2w_switch_temp == 0 && camera_switch_temp == 0)
 			dt2w_switch = wakeup_gesture_temp;
 		s2w_switch = s2w_switch_temp;
+		camera_switch = camera_switch_temp;
 #endif
 		rmi4_data->enable_wakeup_gesture = wakeup_gesture_temp;
 		wakeup_gesture_changed = false;
