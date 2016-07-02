@@ -2763,7 +2763,7 @@ static ssize_t dynamic_dsitiming_sysfs_wta(struct device *dev,
 	}
 
 	if (!mdp5_data->ctl || !mdss_mdp_ctl_is_power_on(mdp5_data->ctl)) {
-		pr_err("%s: no ctl or ctl is off\n",__func__);
+		pr_err_ratelimited("%s: no ctl or ctl is off\n",__func__);
 		return -ENODEV;
 	}
 
@@ -4688,16 +4688,6 @@ static int mdss_mdp_overlay_off(struct msm_fb_data_type *mfd)
 		msleep(vsync_time);
 
 		__vsync_retire_signal(mfd, mdp5_data->retire_cnt);
-
-		/*
-		 * the retire work can still schedule after above retire_signal
-		 * api call. Flush workqueue guarantees that current caller
-		 * context is blocked till retire_work finishes. Any work
-		 * schedule after flush call should not cause any issue because
-		 * retire_signal api checks for retire_cnt with sync_mutex lock.
-		 */
-
-		flush_work(&mdp5_data->retire_work);
 	}
 
 ctl_stop:
